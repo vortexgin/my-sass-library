@@ -3,15 +3,15 @@ import { notFound } from "next/navigation";
 import { connectDatabase } from "@/database/sequelize";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
-import { OrganizationForm } from "@/app/sass/components/organization/OrganizationForm";
+import { PackageForm } from "@/app/sass/components/package/PackageForm";
 import { requireSession } from "@/libraries/Auth";
-import { OrganizationGetUseCase } from "@/app/sass/useCases/organization/OrganizationGetUseCase";
+import { PackageGetUseCase } from "@/app/sass/useCases/package/PackageGetUseCase";
 
 export const metadata: Metadata = {
-  title: "Edit organization | VortexGin",
+  title: "Edit package | VortexGin",
 };
 
-export default async function OrganizationEditPage({
+export default async function PackageEditPage({
   params,
 }: {
   params: Promise<{ uuid: string }>;
@@ -21,13 +21,13 @@ export default async function OrganizationEditPage({
   const { uuid } = await params;
   await connectDatabase();
 
-  let organization;
+  let item;
   try {
-    organization = await new OrganizationGetUseCase().exec(uuid);
+    item = await new PackageGetUseCase().exec(uuid);
   } catch {
     notFound();
   }
-  if (!organization) {
+  if (!item) {
     notFound();
   }
 
@@ -35,7 +35,7 @@ export default async function OrganizationEditPage({
     <AuthComponent
       user={session.user}
       permissions={session.permissions}
-      allowedPermissions={["sass:organization:view:update"]}
+      allowedPermissions={["sass:package:view:update"]}
       accessDeniedComponent={
         <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
           <AccessDenied />
@@ -43,16 +43,18 @@ export default async function OrganizationEditPage({
       }
     >
       <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-        <OrganizationForm
+        <PackageForm
           mode="edit"
-          uuid={organization.uuid}
+          uuid={item.uuid}
           initial={{
-            name: organization.name,
-            address: organization.address,
-            email: organization.email,
-            phone: organization.phone,
-            npwp: organization.npwp,
-            status: organization.status,
+            name: item.name,
+            description: item.description,
+            type: item.type,
+            duration_days: item.duration_days,
+            duration_description: item.duration_description,
+            credit_quota: item.credit_quota,
+            status: item.status,
+            actions: item.actions,
           }}
         />
       </main>

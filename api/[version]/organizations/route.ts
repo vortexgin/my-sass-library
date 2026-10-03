@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
-import { withEncryption } from "@/libraries/EncryptedRoute";
 import { fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
 import { OrganizationCreateUseCase } from "@/app/sass/useCases/organization/OrganizationCreateUseCase";
 import { OrganizationListUseCase } from "@/app/sass/useCases/organization/OrganizationListUseCase";
@@ -42,5 +41,5 @@ async function handlePost(request: NextRequest) {
   }
 }
 
-export const GET = withAuthorization(withEncryption(handleGet), ["authorized"]);
-export const POST = withAuthorization(withEncryption(handlePost), ["authorized"]);
+export const GET = withAuthorization(handleGet, ["sass:organization:list:list"]);
+export const POST = withAuthorization(handlePost, ["sass:organization:create:create"]);

@@ -4,13 +4,12 @@ import Link from "next/link";
 import { connectDatabase } from "@/database/sequelize";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
-import { DeleteOrganizationButton } from "@/app/sass/components/organization/DeleteOrganizationButton";
-import { ORGANIZATION_LIST_PATH } from "@/app/sass/views/organizations/paths";
+import { INVOICE_LIST_PATH } from "@/app/sass/views/invoices/paths";
 import { requireSession } from "@/libraries/Auth";
-import { OrganizationGetUseCase } from "@/app/sass/useCases/organization/OrganizationGetUseCase";
+import { InvoiceGetUseCase } from "@/app/sass/useCases/invoice/InvoiceGetUseCase";
 
 export const metadata: Metadata = {
-  title: "Organization detail | VortexGin",
+  title: "Invoice detail | VortexGin",
 };
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -22,7 +21,11 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function OrganizationDetailPage({
+function isCreditPackage(type: string | null): boolean {
+  return type === "transaction" || type === "quota";
+}
+
+export default async function InvoiceDetailPage({
   params,
 }: {
   params: Promise<{ uuid: string }>;
@@ -32,21 +35,23 @@ export default async function OrganizationDetailPage({
   const { uuid } = await params;
   await connectDatabase();
 
-  let organization;
+  let invoice;
   try {
-    organization = await new OrganizationGetUseCase().exec(uuid);
+    invoice = await new InvoiceGetUseCase().exec(uuid);
   } catch {
     notFound();
   }
-  if (!organization) {
+  if (!invoice) {
     notFound();
   }
+
+  const packageType = invoice.package.type;
 
   return (
     <AuthComponent
       user={session.user}
       permissions={session.permissions}
-      allowedPermissions={["sass:organization:view:detail"]}
+      allowedPermissions={["authorized"]}
       accessDeniedComponent={
         <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
           <AccessDenied />
@@ -59,48 +64,38 @@ export default async function OrganizationDetailPage({
           <div className="rounded-[28px] border border-slate-200 bg-white/90 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-sm sm:p-8">
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-600">Detail</p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
-              {organization.name}
+              {invoice.organization.name}
             </h1>
 
             <dl className="mt-6">
-              <Row label="UUID" value={organization.uuid} />
-              <Row label="Name" value={organization.name} />
-              <Row label="Address" value={organization.address} />
-              <Row label="Email" value={organization.email} />
-              <Row label="Phone" value={organization.phone} />
-              <Row label="NPWP" value={organization.npwp ?? "—"} />
-              <Row label="Status" value={organization.status} />
-              <Row label="Created" value={organization.created_at} />
-              <Row label="Updated" value={organization.updated_at} />
+              <Row label="UUID" value={invoice.uuid} />
+              <Row label="Organization" value={invoice.organization.name} />
+              <Row label="Org NPWP" value={invoice.organization.npwp ?? "—"} />
+              <Row label="Package" value={invoice.package.name} />
+              <Row label="Package type" value={packageType ?? "—"} />
+              <Row label="Start date" value={invoice.start_date ?? "—"} />
+              <Row label="End date" value={invoice.end_date ?? "—"} />
+              {isCreditPackage(packageType) ? (
+                <>
+                  <Row
+                    label="Credit limit"
+                    value={typeof invoice.credit_limit === "number" ? String(invoice.credit_limit) : "—"}
+                  />
+                  <Row label="Credit usage" value={String(invoice.credit_usage)} />
+                </>
+              ) : null}
+              <Row label="Status" value={invoice.status} />
+              <Row label="Created" value={invoice.created_at} />
+              <Row label="Updated" value={invoice.updated_at} />
             </dl>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
-                href={ORGANIZATION_LIST_PATH}
+                href={INVOICE_LIST_PATH}
                 className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
               >
                 Back to list
               </Link>
-              <AuthComponent
-                user={session.user}
-                permissions={session.permissions}
-                allowedPermissions={["sass:organization:view:update"]}
-              >
-                <Link
-                  href={`/sass/views/organizations/${organization.uuid}/edit`}
-                  className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
-                >
-                  Edit
-                </Link>
-              </AuthComponent>
-              <AuthComponent
-                user={session.user}
-                permissions={session.permissions}
-                allowedPermissions={["sass:organization:view:delete"]}
-              >
-                <DeleteOrganizationButton uuid={organization.uuid} label={organization.name} redirectTo={ORGANIZATION_LIST_PATH} />
-              </AuthComponent>
-
             </div>
           </div>
         </div>

@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
 import { AuthComponent } from "@/components/AuthComponent";
 import { AccessDenied } from "@/components/AccessDenied";
-import { OrganizationForm } from "@/app/sass/components/organization/OrganizationForm";
+import { PackageForm } from "@/app/sass/components/package/PackageForm";
 import { requireSession } from "@/libraries/Auth";
 
 export const metadata: Metadata = {
-  title: "New organization | VortexGin",
+  title: "New package | VortexGin",
 };
 
-export default async function OrganizationCreatePage() {
+export default async function PackageCreatePage() {
   const session = await requireSession();
 
   return (
     <AuthComponent
       user={session.user}
       permissions={session.permissions}
-      allowedPermissions={["sass:organization:create:create"]}
+      allowedPermissions={["sass:package:create:create"]}
       accessDeniedComponent={
         <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
           <AccessDenied />
@@ -24,7 +24,7 @@ export default async function OrganizationCreatePage() {
     >
 
       <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-        <OrganizationForm mode="create" />
+        <PackageForm mode="create" />
       </main>
     </AuthComponent>
   );
