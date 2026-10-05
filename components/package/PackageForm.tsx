@@ -7,12 +7,10 @@ import { PACKAGE_LIST_PATH } from "@/app/sass/views/packages/paths";
 import type { Package, PackageAction } from "@/app/sass/models/PackageModel";
 import type { Action } from "@/app/base/models/ActionModel";
 import { getEncrypted, postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
+import { SelectField, TextAreaField, TextField } from "@/components/FormField";
 
 const API_PATH = "/sass/api/v1/packages";
 const ACTION_API_PATH = "/base/api/v1/actions";
-
-const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
 type ActionOption = {
   uuid: string;
@@ -33,6 +31,7 @@ export function PackageForm({
   const router = useRouter();
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [actionsLoading, setActionsLoading] = useState(true);
   const [packageType, setPackageType] = useState<"subscription" | "transaction" | "quota">(initial?.type ?? "subscription");
   const [actionOptions, setActionOptions] = useState<ActionOption[]>([]);
   const [selected, setSelected] = useState<Record<string, string>>(() => {
@@ -62,10 +61,16 @@ export function PackageForm({
               isTransactions: action.is_transactions === true,
             })),
           );
+        } else if (active) {
+          setError("Failed to load actions. Please try again.");
         }
       } catch {
         if (active) {
           setError("Failed to load actions. Please try again.");
+        }
+      } finally {
+        if (active) {
+          setActionsLoading(false);
         }
       }
     })();
@@ -82,9 +87,7 @@ export function PackageForm({
       option.isTransactions &&
       option.action.toLowerCase().includes(actionFilter.trim().toLowerCase()),
   );
-  const visibleSelected = Object.entries(selected).filter(([actionId]) =>
-    visibleOptions.some((option) => option.uuid === actionId),
-  );
+  const selectedCount = Object.keys(selected).length;
 
   function toggleAction(actionId: string) {
     setSelected((current) => {
@@ -104,13 +107,27 @@ export function PackageForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (actionsLoading) {
+      setError("Actions are still loading. Please wait and try again.");
+      return;
+    }
+    for (const credit of Object.values(selected)) {
+      if (credit.trim() === "") {
+        continue;
+      }
+      const parsed = Number(credit);
+      if (!Number.isInteger(parsed) || parsed < 0) {
+        setError("Credit for each selected action must be a non-negative integer.");
+        return;
+      }
+    }
     setError("");
     setIsPending(true);
 
     try {
       const formData = new FormData(event.currentTarget);
       const type = String(formData.get("type") ?? "subscription");
-      const actions: PackageAction[] = visibleSelected.map(([action_id, credit]) => {
+      const actions: PackageAction[] = Object.entries(selected).map(([action_id, credit]) => {
         const parsed = Number.parseInt(credit, 10);
         return Number.isNaN(parsed) ? { action_id } : { action_id, credit: parsed };
       });
@@ -165,93 +182,76 @@ export function PackageForm({
         </h1>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Name</span>
-            <input
-              type="text"
-              name="name"
-              required
-              minLength={2}
-              maxLength={120}
-              defaultValue={initial?.name ?? ""}
-              placeholder="e.g. Pro monthly"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Name"
+            type="text"
+            name="name"
+            required
+            minLength={2}
+            maxLength={120}
+            defaultValue={initial?.name ?? ""}
+            placeholder="e.g. Pro monthly"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Description</span>
-            <textarea
-              name="description"
-              rows={3}
-              maxLength={255}
-              defaultValue={initial?.description ?? ""}
-              placeholder="What this package offers."
-              className={inputClass}
-            />
-          </label>
+          <TextAreaField
+            label="Description"
+            name="description"
+            rows={3}
+            maxLength={255}
+            defaultValue={initial?.description ?? ""}
+            placeholder="What this package offers."
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Type</span>
-            <select
-              name="type"
-              value={packageType}
-              onChange={(event) => setPackageType(event.target.value as "subscription" | "transaction" | "quota")}
-              className={inputClass}
-            >
-              <option value="subscription">subscription</option>
-              <option value="transaction">transaction</option>
-              <option value="quota">quota</option>
-            </select>
-          </label>
+          <SelectField
+            label="Type"
+            name="type"
+            value={packageType}
+            onChange={(event) => setPackageType(event.target.value as "subscription" | "transaction" | "quota")}
+            options={[
+              { value: "subscription", label: "subscription" },
+              { value: "transaction", label: "transaction" },
+              { value: "quota", label: "quota" },
+            ]}
+          />
 
           {packageType === "subscription" ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">Duration (days)</span>
-                <input
-                  type="number"
-                  name="duration_days"
-                  min={1}
-                  defaultValue={initial?.duration_days ?? ""}
-                  placeholder="e.g. 30"
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-slate-700">Duration description</span>
-                <input
-                  type="text"
-                  name="duration_description"
-                  maxLength={255}
-                  defaultValue={initial?.duration_description ?? ""}
-                  placeholder="e.g. 1 month"
-                  className={inputClass}
-                />
-              </label>
+              <TextField
+                label="Duration (days)"
+                type="number"
+                name="duration_days"
+                min={1}
+                defaultValue={initial?.duration_days ?? ""}
+                placeholder="e.g. 30"
+              />
+              <TextField
+                label="Duration description"
+                type="text"
+                name="duration_description"
+                maxLength={255}
+                defaultValue={initial?.duration_description ?? ""}
+                placeholder="e.g. 1 month"
+              />
             </div>
           ) : null}
 
           {packageType === "quota" ? (
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Credit quota</span>
-              <input
-                type="number"
-                name="credit_quota"
-                min={0}
-                step={1}
-                defaultValue={initial?.credit_quota ?? ""}
-                placeholder="e.g. 1000"
-                className={inputClass}
-              />
-            </label>
+            <TextField
+              label="Credit quota"
+              type="number"
+              name="credit_quota"
+              min={0}
+              step={1}
+              defaultValue={initial?.credit_quota ?? ""}
+              placeholder="e.g. 1000"
+            />
           ) : null}
 
           <div className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">
-              Actions ({visibleSelected.length} selected)
+              Actions ({selectedCount} selected)
             </span>
-            <input
+            <TextField
               type="search"
               value={actionFilter}
               onChange={(event) => setActionFilter(event.target.value)}
@@ -292,13 +292,15 @@ export function PackageForm({
             </div>
           </div>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
-            <select name="status" defaultValue={initial?.status ?? "active"} className={inputClass}>
-              <option value="active">active</option>
-              <option value="inactive">inactive</option>
-            </select>
-          </label>
+          <SelectField
+            label="Status"
+            name="status"
+            defaultValue={initial?.status ?? "active"}
+            options={[
+              { value: "active", label: "active" },
+              { value: "inactive", label: "inactive" },
+            ]}
+          />
 
           {error ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -309,7 +311,7 @@ export function PackageForm({
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || actionsLoading}
               className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500"
             >
               {isPending ? "Saving..." : mode === "create" ? "Create package" : "Save changes"}

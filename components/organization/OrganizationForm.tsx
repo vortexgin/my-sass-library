@@ -6,11 +6,9 @@ import { useState, type FormEvent } from "react";
 import { ORGANIZATION_LIST_PATH } from "@/app/sass/views/organizations/paths";
 import type { Organization } from "@/app/sass/models/OrganizationModel";
 import { postEncrypted, putEncrypted } from "@/libraries/EncryptedFetch";
+import { SelectField, TextField } from "@/components/FormField";
 
 const API_PATH = "/sass/api/v1/organizations";
-
-const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none transition focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
 
 export function OrganizationForm({
   mode,
@@ -70,80 +68,67 @@ export function OrganizationForm({
         </h1>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Name</span>
-            <input
-              type="text"
-              name="name"
-              required
-              minLength={2}
-              maxLength={120}
-              defaultValue={initial?.name ?? ""}
-              placeholder="Organization name"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Name"
+            type="text"
+            name="name"
+            required
+            minLength={2}
+            maxLength={120}
+            defaultValue={initial?.name ?? ""}
+            placeholder="Organization name"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Address</span>
-            <input
-              type="text"
-              name="address"
-              required
-              minLength={5}
-              maxLength={255}
-              defaultValue={initial?.address ?? ""}
-              placeholder="Street, city"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Address"
+            type="text"
+            name="address"
+            required
+            minLength={5}
+            maxLength={255}
+            defaultValue={initial?.address ?? ""}
+            placeholder="Street, city"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Email</span>
-            <input
-              type="email"
-              name="email"
-              required
-              maxLength={160}
-              defaultValue={initial?.email ?? ""}
-              placeholder="org@company.com"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Email"
+            type="email"
+            name="email"
+            required
+            maxLength={160}
+            defaultValue={initial?.email ?? ""}
+            placeholder="org@company.com"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Phone</span>
-            <input
-              type="tel"
-              name="phone"
-              required
-              minLength={6}
-              maxLength={30}
-              defaultValue={initial?.phone ?? ""}
-              placeholder="+15550001111"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="Phone"
+            type="tel"
+            name="phone"
+            required
+            minLength={6}
+            maxLength={30}
+            defaultValue={initial?.phone ?? ""}
+            placeholder="+15550001111"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">NPWP</span>
-            <input
-              type="text"
-              name="npwp"
-              maxLength={30}
-              defaultValue={initial?.npwp ?? ""}
-              placeholder="Optional"
-              className={inputClass}
-            />
-          </label>
+          <TextField
+            label="NPWP"
+            type="text"
+            name="npwp"
+            maxLength={30}
+            defaultValue={initial?.npwp ?? ""}
+            placeholder="Optional"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">Status</span>
-            <select name="status" defaultValue={initial?.status ?? "active"} className={inputClass}>
-              <option value="active">active</option>
-              <option value="inactive">inactive</option>
-            </select>
-          </label>
+          <SelectField
+            label="Status"
+            name="status"
+            defaultValue={initial?.status ?? "active"}
+            options={[
+              { value: "active", label: "active" },
+              { value: "inactive", label: "inactive" },
+            ]}
+          />
 
           {error ? (
             <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
