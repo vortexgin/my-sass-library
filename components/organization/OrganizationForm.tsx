@@ -49,7 +49,7 @@ export function OrganizationForm({
         return;
       }
 
-      router.push(ORGANIZATION_LIST_PATH);
+      router.push(mode === "create" ? ORGANIZATION_LIST_PATH : `${ORGANIZATION_LIST_PATH}/${uuid}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

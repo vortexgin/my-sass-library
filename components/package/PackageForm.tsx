@@ -163,7 +163,7 @@ export function PackageForm({
         return;
       }
 
-      router.push(PACKAGE_LIST_PATH);
+      router.push(mode === "create" ? PACKAGE_LIST_PATH : `${PACKAGE_LIST_PATH}/${uuid}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
