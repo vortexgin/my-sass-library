@@ -20,6 +20,8 @@ export type Invoice = {
   uuid: string;
   organization: InvoiceOrganization;
   package: InvoicePackage;
+  sales_order_id: string | null;
+  sales_order_number: string | null;
   start_date: string | null;
   end_date: string | null;
   credit_limit: number | null;
@@ -34,6 +36,8 @@ export type InvoiceModelAttributes = {
   uuid: string;
   organization: InvoiceOrganization;
   package: InvoicePackage;
+  sales_order_id: string | null;
+  sales_order_number: string | null;
   start_date: string | null;
   end_date: string | null;
   credit_limit: number | null;
@@ -50,6 +54,8 @@ export class InvoiceModel extends Model<InvoiceModelAttributes, InvoiceModelCrea
   declare uuid: string;
   declare organization: InvoiceOrganization;
   declare package: InvoicePackage;
+  declare sales_order_id: string | null;
+  declare sales_order_number: string | null;
   declare start_date: string | null;
   declare end_date: string | null;
   declare credit_limit: number | null;
@@ -75,6 +81,9 @@ export class InvoiceModel extends Model<InvoiceModelAttributes, InvoiceModelCrea
       },
       start_date: invoice.start_date ?? null,
       end_date: invoice.end_date ?? null,
+      // Null on old DBs (pre SO-link migration): read tolerantly.
+      sales_order_id: typeof invoice.sales_order_id === "string" ? invoice.sales_order_id : null,
+      sales_order_number: typeof invoice.sales_order_number === "string" ? invoice.sales_order_number : null,
       credit_limit: typeof invoice.credit_limit === "number" ? invoice.credit_limit : null,
       credit_usage: typeof invoice.credit_usage === "number" ? invoice.credit_usage : 0,
       status: invoice.status,
@@ -119,6 +128,16 @@ async function initInvoiceModel(): Promise<typeof InvoiceModel> {
         package: {
           type: DataTypes.JSONB,
           allowNull: false,
+        },
+        sales_order_id: {
+          type: DataTypes.UUID,
+          allowNull: true,
+          defaultValue: null,
+        },
+        sales_order_number: {
+          type: DataTypes.STRING(60),
+          allowNull: true,
+          defaultValue: null,
         },
         start_date: {
           type: DataTypes.DATEONLY,

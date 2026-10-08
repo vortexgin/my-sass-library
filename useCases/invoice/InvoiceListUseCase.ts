@@ -5,6 +5,7 @@ import { BaseUseCase } from "@/useCases/BaseUseCase";
 
 export type ListInvoicesFilter = {
   status?: string;
+  sales_order_id?: string;
 };
 
 export type ListInvoicesInput = {
@@ -17,6 +18,7 @@ export type ListInvoicesInput = {
 
 export type ListInvoicesQuery = {
   status?: string;
+  sales_order_id?: string;
   sortProperty: string;
   sortDirection: "ASC" | "DESC";
   offset: number;
@@ -35,6 +37,7 @@ const SORTABLE_COLUMNS: Record<string, string> = {
 const listInvoicesSchema = Joi.object({
   filter: Joi.object({
     status: Joi.string().valid("running", "active", "inactive", "paid", "deleted").optional(),
+    sales_order_id: Joi.string().uuid({ version: "uuidv4" }).optional(),
   }).optional(),
   sortProperty: Joi.string()
     .valid(...Object.keys(SORTABLE_COLUMNS))
@@ -58,6 +61,7 @@ export class InvoiceListUseCase extends BaseUseCase<ListInvoicesInput | void, In
 
     return {
       status: filter.status || undefined,
+      sales_order_id: filter.sales_order_id || undefined,
       sortProperty: SORTABLE_COLUMNS[validated.sortProperty.toLowerCase()] ?? "created_at",
       sortDirection: validated.sortDirection.toUpperCase() as "ASC" | "DESC",
       offset: validated.offset,
@@ -71,6 +75,10 @@ export class InvoiceListUseCase extends BaseUseCase<ListInvoicesInput | void, In
 
     if (context.status) {
       conditions.push({ status: context.status });
+    }
+
+    if (context.sales_order_id) {
+      conditions.push({ sales_order_id: context.sales_order_id });
     }
 
     const invoices = await InvoiceModel.findAll({

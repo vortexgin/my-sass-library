@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { connectDatabase } from "@/database/sequelize";
 import { withAuthorization } from "@/libraries/AuthorizedRoute";
 import { withEncryption } from "@/libraries/EncryptedRoute";
-import { fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
+import { collectFilters, fail, getErrorStatus, ok, queryParam } from "@/libraries/Http";
 import { InvoiceListUseCase } from "@/app/sass/useCases/invoice/InvoiceListUseCase";
 
 export const runtime = "nodejs";
@@ -12,9 +12,7 @@ async function handleGet(request: NextRequest) {
     await connectDatabase();
     const params = request.nextUrl.searchParams;
     const invoices = await new InvoiceListUseCase().exec({
-      filter: {
-        status: queryParam(params, "filter[status]"),
-      },
+      filter: collectFilters(params),
       sortProperty: queryParam(params, "sortProperty"),
       sortDirection: queryParam(params, "sortDirection"),
       offset: queryParam(params, "offset"),
