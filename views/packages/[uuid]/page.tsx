@@ -8,17 +8,18 @@ import { DeletePackageButton } from "@/app/sass/components/package/DeletePackage
 import { PACKAGE_LIST_PATH } from "@/app/sass/views/packages/paths";
 import { requireSession } from "@/libraries/Auth";
 import { PackageGetUseCase } from "@/app/sass/useCases/package/PackageGetUseCase";
+import { formatMoney } from "@/libraries/Currency";
 import ActionModelFactory, { ActionModel } from "@/app/base/models/ActionModel";
 
 export const metadata: Metadata = {
   title: "Package detail | VortexGin",
 };
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, numeric }: { label: string; value: string; numeric?: boolean }) {
   return (
     <div className="flex flex-col gap-1 border-b border-slate-100 py-3 last:border-0 sm:flex-row sm:items-baseline sm:gap-6">
       <dt className="w-32 shrink-0 text-xs font-medium uppercase tracking-wider text-slate-500">{label}</dt>
-      <dd className="break-all text-sm text-slate-900">{value}</dd>
+      <dd className={`break-all text-sm text-slate-900${numeric ? " tabular-nums sm:ml-auto sm:text-right" : ""}`}>{value}</dd>
     </div>
   );
 }
@@ -88,7 +89,8 @@ export default async function PackageDetailPage({
               {item.type === "quota" ? (
                 <Row
                   label="Credit quota"
-                  value={typeof item.credit_quota === "number" ? String(item.credit_quota) : "—"}
+                  value={formatMoney(item.credit_quota)}
+                  numeric
                 />
               ) : null}
               <Row

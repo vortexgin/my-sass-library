@@ -7,16 +7,17 @@ import { AccessDenied } from "@/components/AccessDenied";
 import { INVOICE_LIST_PATH } from "@/app/sass/views/invoices/paths";
 import { requireSession } from "@/libraries/Auth";
 import { InvoiceGetUseCase } from "@/app/sass/useCases/invoice/InvoiceGetUseCase";
+import { formatMoney } from "@/libraries/Currency";
 
 export const metadata: Metadata = {
   title: "Invoice detail | VortexGin",
 };
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, numeric }: { label: string; value: string; numeric?: boolean }) {
   return (
     <div className="flex flex-col gap-1 border-b border-slate-100 py-3 last:border-0 sm:flex-row sm:items-baseline sm:gap-6">
       <dt className="w-32 shrink-0 text-xs font-medium uppercase tracking-wider text-slate-500">{label}</dt>
-      <dd className="break-all text-sm text-slate-900">{value}</dd>
+      <dd className={`break-all text-sm text-slate-900${numeric ? " tabular-nums sm:ml-auto sm:text-right" : ""}`}>{value}</dd>
     </div>
   );
 }
@@ -79,9 +80,10 @@ export default async function InvoiceDetailPage({
                 <>
                   <Row
                     label="Credit limit"
-                    value={typeof invoice.credit_limit === "number" ? String(invoice.credit_limit) : "—"}
+                    value={formatMoney(invoice.credit_limit)}
+                    numeric
                   />
-                  <Row label="Credit usage" value={String(invoice.credit_usage)} />
+                  <Row label="Credit usage" value={formatMoney(invoice.credit_usage)} numeric />
                 </>
               ) : null}
               <Row label="Status" value={invoice.status} />
